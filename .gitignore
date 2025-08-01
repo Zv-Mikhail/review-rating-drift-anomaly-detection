@@ -1,0 +1,4 @@
+*.csv
+*.ipynb
+!parspods.xlsx
+!pods.xlsx
