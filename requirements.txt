@@ -1,0 +1,15 @@
+pandas==2.2.3
+transformers==4.28.1
+tqdm==4.65.0
+numpy==1.26.2
+matplotlib==3.8.2
+scikit-learn==1.5.3
+scipy==1.11.1
+
+# API
+fastapi==0.111.0
+uvicorn==0.30.1
+
+# Jupyter / работа с ноутбуками
+jupyter==1.0.0
+notebook==7.1.2
