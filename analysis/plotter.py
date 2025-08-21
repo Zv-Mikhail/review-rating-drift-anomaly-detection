@@ -38,24 +38,24 @@ def make_pnegative_plot_png(df: pd.DataFrame) -> bytes:
     ax.plot(ts["date"], ts["sma3"], linewidth=2, label="Скользящее среднее (3 дня)")
     ax.plot(ts["date"], ts["sma7"], linewidth=2, label="Скользящее среднее (7 дней)")
 
-    
-    ax.xaxis.set_major_locator(mdates.DayLocator(interval=2))
+    ax.xaxis.set_major_locator(mdates.DayLocator(interval=3))
     ax.xaxis.set_major_formatter(mdates.DateFormatter("%d.%m"))
-    ax.tick_params(axis="x", rotation=45)
+    ax.tick_params(axis="x", rotation=60)
 
-    # вертикальные линии строго по понедельникам
-    first = pd.to_datetime(ts["date"].min()).normalize()
-    last  = pd.to_datetime(ts["date"].max()).normalize()
-    monday = first - pd.Timedelta(days=first.weekday())
-    week_marks = pd.date_range(monday, last + pd.Timedelta(days=7), freq="W-MON")
+    # фактический диапазон дат с данными
+    valid_dates = ts.loc[ts["avg_p_negative"].notna(), "date"]
+    xmin = pd.to_datetime(valid_dates.min()).normalize()
+    xmax = pd.to_datetime(valid_dates.max()).normalize()
+
+    # вертикальные линии только в пределах [xmin, xmax]
+    monday = xmin - pd.Timedelta(days=xmin.weekday())
+    week_marks = pd.date_range(monday, xmax, freq="W-MON")
     for d in week_marks:
         ax.axvline(d, color="0.85", linestyle="--", linewidth=1, alpha=0.6)
 
-    ax.set_title("Динамика негативных отзывов (p_negative)")
-    ax.set_xlabel("Дата")
-    ax.set_ylabel("Среднее p_negative")
-    max_val = ts[["avg_p_negative", "sma3", "sma7"]].max().max()
-    ax.set_ylim(-0.02, min(1, max_val + 0.1))
+    ax.set_xlim(xmin, xmax )
+    ax.margins(x=0)
+
     ax.legend()
     plt.tight_layout()
 

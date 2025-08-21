@@ -91,5 +91,26 @@ def main():
     print(f"[OK] saved {OUT_PATH}  rows={len(df)}")
     # print(df[["text","pred_label","p_positive","p_negative"]].head(5))
 
+def score_sentiments(input_path: str, output_path: str = "data/airpods_scored.csv") -> str:
+    """
+    Унифицированный интерфейс: читает CSV после препроцессинга,
+    прогоняет модель, сохраняет scored CSV.
+    Возвращает путь к сохранённому файлу.
+    """
+    global IN_PATH, OUT_PATH
+
+    IN_PATH = Path(input_path)
+    OUT_PATH = Path(output_path)
+    main()
+    return str(OUT_PATH.resolve())
+
+
+def analyze_sentiment(input_path: str, output_path: str = "data/airpods_scored.csv") -> str:
+    """
+    Старая обёртка для совместимости.
+    Делает то же самое, что score_sentiments().
+    """
+    return score_sentiments(input_path, output_path)
+
 if __name__ == "__main__":
     main()

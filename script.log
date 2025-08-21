@@ -1,0 +1,196 @@
+2025-07-22 11:19:26,813 - Скрипт запущен
+2025-07-22 11:19:26,813 - Файл конфигурации (config.json) не найден. Создайте его с необходимыми классами.
+2025-07-22 11:26:01,907 - Скрипт запущен
+2025-07-22 11:26:38,375 - Получена ссылка: https://www.ozon.ru/product/indikator-zubnogo-naleta-miradent-mira-2-ton-10ml-1381134601/
+2025-07-22 11:26:38,376 - Запускаем Chrome
+2025-07-22 11:26:38,377 - ====== WebDriver manager ======
+2025-07-22 11:26:38,444 - Get LATEST chromedriver version for google-chrome
+2025-07-22 11:26:39,061 - About to download new driver from https://chromedriver.storage.googleapis.com/114.0.5735.90/chromedriver_mac_arm64.zip
+2025-07-22 11:26:39,680 - Driver downloading response is 200
+2025-07-22 11:26:41,630 - Get LATEST chromedriver version for google-chrome
+2025-07-22 11:26:42,148 - Get LATEST chromedriver version for google-chrome
+2025-07-22 11:26:42,628 - Driver has been saved in cache [/Users/mishnya/.wdm/drivers/chromedriver/mac64/114.0.5735.90]
+2025-07-22 11:37:45,347 - Скрипт запущен
+2025-07-22 11:38:28,511 - Получена ссылка: https://www.ozon.ru/product/indikator-zubnogo-naleta-miradent-mira-2-ton-10ml-1381134601/
+2025-07-22 11:38:28,512 - Запускаем Chrome
+2025-07-22 11:38:28,512 - ====== WebDriver manager ======
+2025-07-22 11:38:32,422 - Get LATEST chromedriver version for google-chrome
+2025-07-22 11:38:32,897 - Get LATEST chromedriver version for google-chrome
+2025-07-22 11:38:33,332 - There is no [mac64] chromedriver "138.0.7204.157" for browser google-chrome "138.0.7204" in cache
+2025-07-22 11:38:33,346 - Get LATEST chromedriver version for google-chrome
+2025-07-22 11:38:34,497 - WebDriver version 138.0.7204.157 selected
+2025-07-22 11:38:34,499 - Modern chrome version https://storage.googleapis.com/chrome-for-testing-public/138.0.7204.157/mac-arm64/chromedriver-mac-arm64.zip
+2025-07-22 11:38:34,499 - About to download new driver from https://storage.googleapis.com/chrome-for-testing-public/138.0.7204.157/mac-arm64/chromedriver-mac-arm64.zip
+2025-07-22 11:38:35,082 - Driver downloading response is 200
+2025-07-22 11:38:36,951 - Get LATEST chromedriver version for google-chrome
+2025-07-22 11:38:37,452 - Driver has been saved in cache [/Users/mishnya/.wdm/drivers/chromedriver/mac64/138.0.7204.157]
+2025-07-22 11:38:38,567 - Chrome открыт
+2025-07-22 11:38:38,568 - Файл cookies (cookies.pkl) не найден. Сначала выполните авторизацию.
+2025-07-22 11:38:38,568 - Cookies не найдены, требуется ручная авторизация
+2025-07-22 11:38:38,635 - ====== WebDriver manager ======
+2025-07-22 11:38:38,799 - Get LATEST chromedriver version for google-chrome
+2025-07-22 11:38:39,293 - Get LATEST chromedriver version for google-chrome
+2025-07-22 11:38:39,805 - Driver [/Users/mishnya/.wdm/drivers/chromedriver/mac64/138.0.7204.157/chromedriver-mac-arm64/chromedriver] found in cache
+2025-07-22 11:38:40,422 - ====== WebDriver manager ======
+2025-07-22 11:38:40,529 - Get LATEST chromedriver version for google-chrome
+2025-07-22 11:38:40,905 - Get LATEST chromedriver version for google-chrome
+2025-07-22 11:38:41,466 - Driver [/Users/mishnya/.wdm/drivers/chromedriver/mac64/138.0.7204.157/chromedriver-mac-arm64/chromedriver] found in cache
+2025-07-22 11:38:44,453 - Пожалуйста, войдите в аккаунт вручную в открывшемся окне браузера.
+2025-07-22 11:47:34,509 - Ошибка при входе: Message: invalid session id: session deleted as the browser has closed the connection
+from disconnected: not connected to DevTools
+  (Session info: chrome=138.0.7204.158); For documentation on this error, please visit: https://www.selenium.dev/documentation/webdriver/troubleshooting/errors#invalidsessionidexception
+Stacktrace:
+0   chromedriver                        0x000000010137355c cxxbridge1$str$ptr + 2731064
+1   chromedriver                        0x000000010136b454 cxxbridge1$str$ptr + 2698032
+2   chromedriver                        0x0000000100eba3f8 cxxbridge1$string$len + 90664
+3   chromedriver                        0x0000000100ea3dc8 chromedriver + 196040
+4   chromedriver                        0x0000000100ec6f14 cxxbridge1$string$len + 142660
+5   chromedriver                        0x0000000100f299bc cxxbridge1$string$len + 546796
+6   chromedriver                        0x0000000100f42638 cxxbridge1$string$len + 648296
+7   chromedriver                        0x0000000100ef5a0c cxxbridge1$string$len + 333884
+8   chromedriver                        0x00000001013365e0 cxxbridge1$str$ptr + 2481340
+9   chromedriver                        0x0000000101339848 cxxbridge1$str$ptr + 2494244
+10  chromedriver                        0x0000000101317234 cxxbridge1$str$ptr + 2353424
+11  chromedriver                        0x000000010133a104 cxxbridge1$str$ptr + 2496480
+12  chromedriver                        0x00000001013082e4 cxxbridge1$str$ptr + 2292160
+13  chromedriver                        0x0000000101359ff8 cxxbridge1$str$ptr + 2627284
+14  chromedriver                        0x000000010135a184 cxxbridge1$str$ptr + 2627680
+15  chromedriver                        0x000000010136b090 cxxbridge1$str$ptr + 2697068
+16  libsystem_pthread.dylib             0x0000000183935c0c _pthread_start + 136
+17  libsystem_pthread.dylib             0x0000000183930b80 thread_start + 8
+
+2025-07-22 11:47:34,577 - ====== WebDriver manager ======
+2025-07-22 11:47:34,742 - Get LATEST chromedriver version for google-chrome
+2025-07-22 11:47:36,364 - Get LATEST chromedriver version for google-chrome
+2025-07-22 11:47:36,845 - Driver [/Users/mishnya/.wdm/drivers/chromedriver/mac64/138.0.7204.157/chromedriver-mac-arm64/chromedriver] found in cache
+2025-07-22 11:47:37,726 - Файл cookies (cookies.pkl) не найден. Сначала выполните авторизацию.
+2025-07-22 11:47:54,758 - Ошибка авторизации через cookies: Message: 
+Stacktrace:
+0   chromedriver                        0x00000001047cf55c cxxbridge1$str$ptr + 2731064
+1   chromedriver                        0x00000001047c7454 cxxbridge1$str$ptr + 2698032
+2   chromedriver                        0x00000001043163f8 cxxbridge1$string$len + 90664
+3   chromedriver                        0x000000010435d71c cxxbridge1$string$len + 382284
+4   chromedriver                        0x000000010439eb1c cxxbridge1$string$len + 649548
+5   chromedriver                        0x0000000104351a0c cxxbridge1$string$len + 333884
+6   chromedriver                        0x00000001047925e0 cxxbridge1$str$ptr + 2481340
+7   chromedriver                        0x0000000104795848 cxxbridge1$str$ptr + 2494244
+8   chromedriver                        0x0000000104773234 cxxbridge1$str$ptr + 2353424
+9   chromedriver                        0x0000000104796104 cxxbridge1$str$ptr + 2496480
+10  chromedriver                        0x00000001047642e4 cxxbridge1$str$ptr + 2292160
+11  chromedriver                        0x00000001047b5ff8 cxxbridge1$str$ptr + 2627284
+12  chromedriver                        0x00000001047b6184 cxxbridge1$str$ptr + 2627680
+13  chromedriver                        0x00000001047c7090 cxxbridge1$str$ptr + 2697068
+14  libsystem_pthread.dylib             0x0000000183935c0c _pthread_start + 136
+15  libsystem_pthread.dylib             0x0000000183930b80 thread_start + 8
+
+2025-07-22 11:47:55,310 - Скрипт запущен
+2025-07-22 11:48:20,448 - Получена ссылка: https://www.ozon.ru/product/indikator-zubnogo-naleta-miradent-mira-2-ton-10ml-1381134601/
+2025-07-22 11:48:20,449 - Запускаем Chrome
+2025-07-22 11:48:20,451 - ====== WebDriver manager ======
+2025-07-22 11:48:20,660 - Get LATEST chromedriver version for google-chrome
+2025-07-22 11:48:21,091 - Get LATEST chromedriver version for google-chrome
+2025-07-22 11:48:21,695 - Driver [/Users/mishnya/.wdm/drivers/chromedriver/mac64/138.0.7204.157/chromedriver-mac-arm64/chromedriver] found in cache
+2025-07-22 11:48:22,774 - Chrome открыт
+2025-07-22 11:48:22,775 - Файл cookies (cookies.pkl) не найден. Сначала выполните авторизацию.
+2025-07-22 11:48:22,775 - Cookies не найдены, требуется ручная авторизация
+2025-07-22 11:48:22,843 - ====== WebDriver manager ======
+2025-07-22 11:48:22,970 - Get LATEST chromedriver version for google-chrome
+2025-07-22 11:48:23,415 - Get LATEST chromedriver version for google-chrome
+2025-07-22 11:48:23,826 - Driver [/Users/mishnya/.wdm/drivers/chromedriver/mac64/138.0.7204.157/chromedriver-mac-arm64/chromedriver] found in cache
+2025-07-22 11:48:24,441 - ====== WebDriver manager ======
+2025-07-22 11:48:24,552 - Get LATEST chromedriver version for google-chrome
+2025-07-22 11:48:24,967 - Get LATEST chromedriver version for google-chrome
+2025-07-22 11:48:25,427 - Driver [/Users/mishnya/.wdm/drivers/chromedriver/mac64/138.0.7204.157/chromedriver-mac-arm64/chromedriver] found in cache
+2025-07-22 11:48:29,006 - Пожалуйста, войдите в аккаунт вручную в открывшемся окне браузера.
+2025-07-22 11:51:15,056 - Скрипт запущен
+2025-07-22 11:51:23,494 - Получена ссылка: source "/Users/mishnya/Documents/vs code project/Webbee_internship/.venv/bin/activate"
+2025-07-22 11:51:23,495 - Запускаем Chrome
+2025-07-22 11:51:23,495 - ====== WebDriver manager ======
+2025-07-22 11:51:23,690 - Get LATEST chromedriver version for google-chrome
+2025-07-22 11:51:24,103 - Get LATEST chromedriver version for google-chrome
+2025-07-22 11:51:24,400 - Driver [/Users/mishnya/.wdm/drivers/chromedriver/mac64/138.0.7204.157/chromedriver-mac-arm64/chromedriver] found in cache
+2025-07-22 11:51:25,415 - Chrome открыт
+2025-07-22 11:51:25,415 - Файл cookies (cookies.pkl) не найден. Сначала выполните авторизацию.
+2025-07-22 11:51:25,415 - Cookies не найдены, требуется ручная авторизация
+2025-07-22 11:51:25,483 - ====== WebDriver manager ======
+2025-07-22 11:51:25,614 - Get LATEST chromedriver version for google-chrome
+2025-07-22 11:51:25,919 - Get LATEST chromedriver version for google-chrome
+2025-07-22 11:51:26,260 - Driver [/Users/mishnya/.wdm/drivers/chromedriver/mac64/138.0.7204.157/chromedriver-mac-arm64/chromedriver] found in cache
+2025-07-22 11:51:26,901 - ====== WebDriver manager ======
+2025-07-22 11:51:26,980 - Get LATEST chromedriver version for google-chrome
+2025-07-22 11:51:27,304 - Get LATEST chromedriver version for google-chrome
+2025-07-22 11:51:27,550 - Driver [/Users/mishnya/.wdm/drivers/chromedriver/mac64/138.0.7204.157/chromedriver-mac-arm64/chromedriver] found in cache
+2025-07-22 11:51:29,089 - Пожалуйста, войдите в аккаунт вручную в открывшемся окне браузера.
+2025-07-22 13:04:16,337 - Скрипт запущен
+2025-07-22 13:04:24,413 - Получена ссылка: https://www.ozon.ru/product/degtyarnoe-mylo-tualetnoe-aist-140g-h-1sht-1156744445/?at=jYtZzJY6KFxpjRx5iM9EDANhZYAKRVFN56WrKt29KP5W&tab=reviews
+2025-07-22 13:04:24,414 - Запускаем Chrome
+2025-07-22 13:04:24,414 - ====== WebDriver manager ======
+2025-07-22 13:04:24,517 - Get LATEST chromedriver version for google-chrome
+2025-07-22 13:04:24,787 - Get LATEST chromedriver version for google-chrome
+2025-07-22 13:04:25,024 - Driver [/Users/mishnya/.wdm/drivers/chromedriver/mac64/138.0.7204.157/chromedriver-mac-arm64/chromedriver] found in cache
+2025-07-22 13:04:25,855 - Chrome открыт
+2025-07-22 13:04:25,855 - Файл cookies (cookies.pkl) не найден. Сначала выполните авторизацию.
+2025-07-22 13:04:25,855 - Cookies не найдены, требуется ручная авторизация
+2025-07-22 13:04:25,938 - ====== WebDriver manager ======
+2025-07-22 13:04:26,073 - Get LATEST chromedriver version for google-chrome
+2025-07-22 13:04:26,309 - Get LATEST chromedriver version for google-chrome
+2025-07-22 13:04:26,529 - Driver [/Users/mishnya/.wdm/drivers/chromedriver/mac64/138.0.7204.157/chromedriver-mac-arm64/chromedriver] found in cache
+2025-07-22 13:04:27,149 - ====== WebDriver manager ======
+2025-07-22 13:04:27,235 - Get LATEST chromedriver version for google-chrome
+2025-07-22 13:04:27,459 - Get LATEST chromedriver version for google-chrome
+2025-07-22 13:04:27,682 - Driver [/Users/mishnya/.wdm/drivers/chromedriver/mac64/138.0.7204.157/chromedriver-mac-arm64/chromedriver] found in cache
+2025-07-22 13:04:29,146 - Пожалуйста, войдите в аккаунт вручную в открывшемся окне браузера.
+2025-07-22 15:36:10,427 - Ошибка при входе: Message: invalid session id: session deleted as the browser has closed the connection
+from disconnected: not connected to DevTools
+  (Session info: chrome=138.0.7204.158); For documentation on this error, please visit: https://www.selenium.dev/documentation/webdriver/troubleshooting/errors#invalidsessionidexception
+Stacktrace:
+0   chromedriver                        0x0000000104baf55c cxxbridge1$str$ptr + 2731064
+1   chromedriver                        0x0000000104ba7454 cxxbridge1$str$ptr + 2698032
+2   chromedriver                        0x00000001046f63f8 cxxbridge1$string$len + 90664
+3   chromedriver                        0x00000001046dfdc8 chromedriver + 196040
+4   chromedriver                        0x0000000104702f14 cxxbridge1$string$len + 142660
+5   chromedriver                        0x00000001047659bc cxxbridge1$string$len + 546796
+6   chromedriver                        0x000000010477e638 cxxbridge1$string$len + 648296
+7   chromedriver                        0x0000000104731a0c cxxbridge1$string$len + 333884
+8   chromedriver                        0x0000000104b725e0 cxxbridge1$str$ptr + 2481340
+9   chromedriver                        0x0000000104b75848 cxxbridge1$str$ptr + 2494244
+10  chromedriver                        0x0000000104b53234 cxxbridge1$str$ptr + 2353424
+11  chromedriver                        0x0000000104b76104 cxxbridge1$str$ptr + 2496480
+12  chromedriver                        0x0000000104b442e4 cxxbridge1$str$ptr + 2292160
+13  chromedriver                        0x0000000104b95ff8 cxxbridge1$str$ptr + 2627284
+14  chromedriver                        0x0000000104b96184 cxxbridge1$str$ptr + 2627680
+15  chromedriver                        0x0000000104ba7090 cxxbridge1$str$ptr + 2697068
+16  libsystem_pthread.dylib             0x0000000183935c0c _pthread_start + 136
+17  libsystem_pthread.dylib             0x0000000183930b80 thread_start + 8
+
+2025-07-22 15:36:10,482 - ====== WebDriver manager ======
+2025-07-22 15:36:10,607 - Get LATEST chromedriver version for google-chrome
+2025-07-22 15:36:11,171 - Get LATEST chromedriver version for google-chrome
+2025-07-22 15:36:11,641 - Driver [/Users/mishnya/.wdm/drivers/chromedriver/mac64/138.0.7204.157/chromedriver-mac-arm64/chromedriver] found in cache
+2025-07-22 15:36:12,444 - Файл cookies (cookies.pkl) не найден. Сначала выполните авторизацию.
+2025-07-27 10:52:03,754 - Скрипт запущен
+2025-07-27 10:52:24,113 - Получена ссылка: https://www.ozon.ru/product/tabletki-dlya-mytya-polov-vodorastvorimye-dezodoranty-tabletki-dlya-ochistki-ot-gryazi-1901469439/
+2025-07-27 10:52:24,115 - Запускаем Chrome
+2025-07-27 10:52:24,115 - ====== WebDriver manager ======
+2025-07-27 10:52:24,263 - Get LATEST chromedriver version for google-chrome
+2025-07-27 10:52:24,769 - Get LATEST chromedriver version for google-chrome
+2025-07-27 10:52:25,209 - There is no [mac64] chromedriver "138.0.7204.168" for browser google-chrome "138.0.7204" in cache
+2025-07-27 10:52:25,215 - Get LATEST chromedriver version for google-chrome
+2025-07-27 10:52:26,518 - WebDriver version 138.0.7204.168 selected
+2025-07-27 10:52:26,519 - Modern chrome version https://storage.googleapis.com/chrome-for-testing-public/138.0.7204.168/mac-arm64/chromedriver-mac-arm64.zip
+2025-07-27 10:52:26,519 - About to download new driver from https://storage.googleapis.com/chrome-for-testing-public/138.0.7204.168/mac-arm64/chromedriver-mac-arm64.zip
+2025-07-27 10:52:27,294 - Driver downloading response is 200
+2025-07-27 10:52:28,650 - Get LATEST chromedriver version for google-chrome
+2025-07-27 10:52:29,251 - Driver has been saved in cache [/Users/mishnya/.wdm/drivers/chromedriver/mac64/138.0.7204.168]
+2025-07-27 10:52:31,358 - Chrome открыт
+2025-07-27 10:52:31,358 - Файл cookies (cookies.pkl) не найден. Сначала выполните авторизацию.
+2025-07-27 10:52:31,358 - Cookies не найдены, требуется ручная авторизация
+2025-07-27 10:52:31,423 - ====== WebDriver manager ======
+2025-07-27 10:52:31,551 - Get LATEST chromedriver version for google-chrome
+2025-07-27 10:52:32,104 - Get LATEST chromedriver version for google-chrome
+2025-07-27 10:52:32,485 - Driver [/Users/mishnya/.wdm/drivers/chromedriver/mac64/138.0.7204.168/chromedriver-mac-arm64/chromedriver] found in cache
+2025-07-27 10:52:33,109 - ====== WebDriver manager ======
+2025-07-27 10:52:33,192 - Get LATEST chromedriver version for google-chrome
+2025-07-27 10:52:33,634 - Get LATEST chromedriver version for google-chrome
+2025-07-27 10:52:34,041 - Driver [/Users/mishnya/.wdm/drivers/chromedriver/mac64/138.0.7204.168/chromedriver-mac-arm64/chromedriver] found in cache
+2025-07-27 10:52:36,605 - Пожалуйста, войдите в аккаунт вручную в открывшемся окне браузера.

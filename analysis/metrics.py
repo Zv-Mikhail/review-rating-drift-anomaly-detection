@@ -27,7 +27,7 @@ def build_daily_metrics(df: pd.DataFrame) -> pd.DataFrame:
         "avg_rating": g["rating"].mean(),
         "neg_share": g["p_negative"].mean(),
     })
-    # сделать сплошную шкалу дат без дыр
+    
     idx = pd.date_range(daily.index.min(), daily.index.max(), freq="D").date
     daily = daily.reindex(idx)
     daily.index.name = "day"
@@ -218,7 +218,7 @@ def detect_negative_drift(
         return "В окнах есть пропуски значений, невозможно корректно оценить drift."
 
     # Линейная регрессия на текущем окне
-    import numpy as np
+    
     y = curr_window["avg_p_negative"].to_numpy()
     n = len(y)
     x = np.arange(n, dtype=float)
@@ -259,11 +259,18 @@ def detect_negative_drift(
     pct_str = f"{sign}{abs(pct_change):.1f}%"
 
     if drift_detected:
-        return (f"Drift выявлен в интервале {current_interval}, наклон={slope_str} (p={p_str}), "
-                f"среднее в окне={mean_curr_str} vs предыдущее окно ({pct_str}).")
+        return (
+            f"За период {current_interval} выявлены отклонения.\n"
+            f"Среднее значение: {mean_curr_str}. "
+            f"Изменение к прошлому окну: {pct_str}. "
+            f"Наклон={slope_str}, p={p_str}."
+        )
     else:
-        return (f"Drift не выявлен в интервале {current_interval}, наклон={slope_str} (p={p_str}), "
-                f"среднее в окне={mean_curr_str} vs предыдущее окно ({pct_str}).")
+        return (
+            f"За период {current_interval} существенных отклонений нет.\n"
+            f"Среднее значение наклона: {mean_curr_str}. "
+            f"Изменение к прошлому окну: {pct_str}."
+        )
 
 def last_day_alert_bad_and_rating_down(df: pd.DataFrame, alpha: float = 0.05) -> tuple[bool, str]:
     """

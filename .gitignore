@@ -2,29 +2,20 @@
 __pycache__/
 *.pyc
 *.pyo
-*.pyd
+notebooks/
 
+data/
 
-.DS_Store
-*.log
-
-
-.ipynb_checkpoints/
-
-
-.vscode/
-.idea/
+parser/results/
 
 
 datasets/*
 
-!datasets/air_pods5.xlsx
 
-!/data/
 !/analysis/
 !/preprocess/
 !/notebooks/
-!/mini_app.py
+!/app.py
 !/requirements.txt
 !/README.md
-datasets/geo-reviews-dataset-2023.csv
+!/image.png
