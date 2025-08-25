@@ -22,5 +22,6 @@ pydantic==2.8.2
 selenium==4.22.0
 webdriver-manager==4.0.1
 
-
+beautifulsoup4==4.12.3
+lxml>=4.9,<5  
 openpyxl==3.1.5
