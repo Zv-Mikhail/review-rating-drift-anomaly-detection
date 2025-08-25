@@ -198,8 +198,6 @@ def main():
     df_final.to_csv(OUT_PATH, index=False)
     print(f"[OK] rows: {len(df_final)}  -> {OUT_PATH}")
 
-    with pd.option_context('display.max_colwidth', 120):
-        print(df_final.head(5))
 
 
 def preprocess_data(input_path: str, output_path: str = "data/airpods_clean.csv") -> str:
