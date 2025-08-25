@@ -89,7 +89,7 @@ def save_metrics_csv(daily: pd.DataFrame, weekly: pd.DataFrame, out_dir: Path = 
 def check_negative_day_universal_pneg(
     check_date,
     df: pd.DataFrame,
-    alpha: float = 0.05,
+    alpha: float = 0.1,
     baseline_days: int | None = None,
     min_reviews: int = 5,
     volume_ratio: float = 0.3,
