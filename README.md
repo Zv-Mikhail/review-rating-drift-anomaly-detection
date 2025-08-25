@@ -92,10 +92,10 @@ cd review-rating-drift-anomaly-detection
 # macOS/Linux
 python3.11 -m venv .venv 
 source .venv/bin/activate
+pip install -r requirements.txt
 # Windows      
 py -3.11 -m venv .venv
 .venv\Scripts\Activate.ps1
-# macOS/Linux/Windows
 pip install -r requirements.txt
 ```
 
