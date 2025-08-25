@@ -28,7 +28,7 @@ PROJECT_ROOT = Path(__file__).resolve().parent
 RESULTS_DIR = PROJECT_ROOT / "parser" / "results"
 DATA_DIR = PROJECT_ROOT / "data"
 FINAL_CSV = DATA_DIR / "reviews_scored.csv"        #единый итоговый файл
-LEGACY_CSV = DATA_DIR / "airpods_scored.csv"       
+   
 
 # --- параметры регулярности/фильтра ---
 MIN_REVIEWS_PER_DAY = 3
@@ -61,18 +61,22 @@ def _latest_xlsx_from_results() -> Path:
         raise FileNotFoundError(f"Парсер отработал, но .xlsx не найден в {RESULTS_DIR}")
     return xlsx_files[0]
 
-def _load_scored_df() -> pd.DataFrame:
+def _load_scored_df() -> Optional[pd.DataFrame]:
     """
     Локальный лоадер: сначала пытаемся читать новый FINAL_CSV,
     если его нет — пробуем legacy-файл для совместимости.
+    Возвращает None, если файлов нет или CSV не читается.
     """
-    if FINAL_CSV.exists():
-        return pd.read_csv(FINAL_CSV, parse_dates=["date"])
-    if LEGACY_CSV.exists():
-        return pd.read_csv(LEGACY_CSV, parse_dates=["date"])
-    raise FileNotFoundError(
-        f"Не найден итоговый файл: {FINAL_CSV} (или {LEGACY_CSV} для совместимости)"
-    )
+    try:
+        if FINAL_CSV.exists():
+            return pd.read_csv(FINAL_CSV, parse_dates=["date"])
+        
+    except Exception as e:
+        # битый CSV — не валим приложение
+        print(f"[load_scored_df] read error: {e}")
+        return None
+    return None
+
 
 def _run_parser(article: str) -> None:
     """
@@ -126,12 +130,7 @@ def _score_sentiment_and_write_final(clean_csv_path: str) -> str:
     _cleanup_old_files(DATA_DIR, keep=0, pattern="clean_*.csv")
     _cleanup_old_files(DATA_DIR, keep=0, pattern="scored_*.csv")
 
-    # если остался старый файл с прежним именем — удалим
-    if LEGACY_CSV.exists():
-        try:
-            LEGACY_CSV.unlink()
-        except Exception:
-            pass
+    
 
     if hasattr(sa, "analyze_sentiment"):
         sa.analyze_sentiment(str(clean_csv_path), str(FINAL_CSV))
@@ -240,8 +239,23 @@ def start_parse(payload: ParseRequest):
 @app.get("/plot.png")
 def plot_png():
     df = _load_scored_df()
+    # нет данных — возвращаем прозрачную заглушку
+    if df is None or df.empty:
+        from io import BytesIO
+        import matplotlib
+        matplotlib.use("Agg")
+        import matplotlib.pyplot as plt
+        fig, ax = plt.subplots(figsize=(4, 1))
+        ax.axis("off")
+        buf = BytesIO()
+        fig.savefig(buf, format="png", dpi=120, bbox_inches="tight", transparent=True)
+        plt.close(fig)
+        buf.seek(0)
+        return Response(content=buf.read(), media_type="image/png")
+
     is_regular, df_filtered, _ = _regularity_and_filter(df)
     if not is_regular or df_filtered.empty:
+        # та же заглушка
         from io import BytesIO
         import matplotlib
         matplotlib.use("Agg")
@@ -258,17 +272,79 @@ def plot_png():
     return Response(content=png, media_type="image/png")
 
 
+
 @app.get("/api/check")
 def api_check(date: str = Query(..., description="YYYY-MM-DD")):
     df = _load_scored_df()
+    if df is None or df.empty:
+        raise HTTPException(status_code=404, detail="Данных ещё нет. Сначала загрузите отзывы.")
     neg = check_negative_day_universal_pneg(date, df)
     drift = detect_negative_drift(df, window=7, end_date=date, alpha=0.05)
     return {"negative_day": neg, "drift": drift}
 
 
+
 @app.get("/", response_class=HTMLResponse)
 def index(request: Request, date: Optional[str] = None):
     df = _load_scored_df()
+
+    # 👉 если данных ещё нет — показываем одну плашку и выходим
+    if df is None or df.empty:
+        return HTMLResponse("""
+        <html>
+          <head>
+            <meta charset="utf-8" />
+            <title>Mini Review Dashboard</title>
+            <style>
+              :root { --border:#e5e7eb; }
+              body { font-family: -apple-system, Segoe UI, Roboto, Arial, sans-serif; margin:24px; }
+              .wrap { max-width:900px; margin:0 auto; }
+              .form { margin:12px 0 16px 0; display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
+              input[type=text] { padding:8px 10px; border:1px solid var(--border); border-radius:8px; }
+              button { padding:8px 14px; border-radius:8px; border:1px solid var(--border); background:#fff; cursor:pointer; }
+              button:hover { background:#f9fafb; }
+              .muted { color:#6b7280; font-size:13px; }
+            </style>
+          </head>
+          <body>
+            <div class="wrap">
+              <h2>Загрузить новые отзывы по артикулу</h2>
+              <form class="form" id="parse-form" onsubmit="return false;">
+                <label for="article_id">Артикул:</label>
+                <input type="text" id="article_id" name="article_id" placeholder="Напр. 218295138" />
+                <button id="btn-parse" type="button">Запустить</button>
+                <span id="parse-status" class="muted" style="margin-left:8px;"></span>
+              </form>
+              <script>
+                async function startParse() {
+                  const inputEl = document.getElementById('article_id');
+                  const statusEl = document.getElementById('parse-status');
+                  const article = (inputEl.value || '').trim();
+                  statusEl.textContent = '';
+                  if (!article) { statusEl.textContent = 'Введите артикул.'; return; }
+                  try {
+                    statusEl.textContent = 'Отправка...';
+                    const res = await fetch('/api/parse/start', {
+                      method: 'POST',
+                      headers: {'Content-Type': 'application/json'},
+                      body: JSON.stringify({ article_id: article })
+                    });
+                    const data = await res.json();
+                    if (!res.ok) { statusEl.textContent = "Ошибка: " + (data.detail || res.status); return; }
+                    statusEl.textContent = "OK: " + data.message;
+                    setTimeout(() => { window.location.href = '/'; }, 600);
+                  } catch (e) { statusEl.textContent = 'Сетевая ошибка.'; }
+                }
+                document.addEventListener('DOMContentLoaded', function () {
+                  const btn = document.getElementById('btn-parse');
+                  if (btn) btn.addEventListener('click', startParse);
+                });
+              </script>
+            </div>
+          </body>
+        </html>
+        """, status_code=200)
+
 
     s = compute_summary(df)
     dw = compute_daily_week_stats(df, days=7)
@@ -278,6 +354,16 @@ def index(request: Request, date: Optional[str] = None):
     badge_html = f'<div class="badge">⚠️ {badge_msg}</div>' if flag else ""
 
     is_regular, _df_dense, dense_ratio = _regularity_and_filter(df)
+    
+    last_date_available = None
+    try:
+        if df is not None and not df.empty and "date" in df.columns:
+            last_date_available = pd.to_datetime(df["date"]).max().date().isoformat()
+    except Exception:
+        last_date_available = None
+
+    if is_regular and date is None and last_date_available:
+        date = last_date_available
 
     sparse_notice_html = ""
     if not is_regular:
