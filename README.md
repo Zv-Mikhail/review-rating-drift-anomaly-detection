@@ -83,8 +83,8 @@
 ### 1) Клонировать репозиторий:
 
 ```bash
-git clone https://github.com/username/project-name.git
-cd project-name
+https://github.com/Zv-Mikhail/review-rating-drift-anomaly-detection.git
+cd review-rating-drift-anomaly-detection
 ```
 ### 2 Подготовка окружения
 
