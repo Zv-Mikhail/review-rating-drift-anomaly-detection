@@ -89,16 +89,20 @@ cd project-name
 ### 2 Подготовка окружения
 
 ```bash
+# macOS/Linux
 python3.11 -m venv .venv 
-source .venv/bin/activate      # macOS/Linux
-# .venv\Scripts\activate      # Windows
+source .venv/bin/activate
+# Windows      
+py -3.11 -m venv .venv
+.venv\Scripts\Activate.ps1
+# macOS/Linux/Windows
 pip install -r requirements.txt
 ```
 
 ### 2) Запуск сервера
 
 ```bash
-uvicorn mini_app:app --reload
+uvicorn app:app --reload
 ```
 После запуска приложение будет доступно по адресу:
 http://127.0.0.1:8000
