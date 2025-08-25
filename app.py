@@ -5,7 +5,7 @@ from pathlib import Path
 from datetime import datetime
 import subprocess
 import shutil
-
+import sys 
 import pandas as pd
 from fastapi import FastAPI, Response, Query, Request, HTTPException
 from fastapi.responses import HTMLResponse
@@ -79,12 +79,9 @@ def _load_scored_df() -> Optional[pd.DataFrame]:
 
 
 def _run_parser(article: str) -> None:
-    """
-    Запускает parser/main.py, который записывает .xlsx в parser/results/.
-    """
     RESULTS_DIR.mkdir(parents=True, exist_ok=True)
     completed = subprocess.run(
-        ["python", "parser/main.py"],
+        [sys.executable, "parser/main.py"],  # было: ["python", "parser/main.py"]
         input=f"{article}\n".encode("utf-8"),
         cwd=str(PROJECT_ROOT),
         capture_output=True,
@@ -94,9 +91,9 @@ def _run_parser(article: str) -> None:
         out = completed.stdout.decode("utf-8", errors="ignore")
         err = completed.stderr.decode("utf-8", errors="ignore")
         raise RuntimeError(
-            "parser/main.py failed "
-            f"(code {completed.returncode}).\nSTDOUT:\n{out}\nSTDERR:\n{err}"
+            f"parser/main.py failed (code {completed.returncode}).\nSTDOUT:\n{out}\nSTDERR:\n{err}"
         )
+
 
 def _preprocess_xlsx_to_clean_tmp(xlsx_path: str) -> str:
     """
