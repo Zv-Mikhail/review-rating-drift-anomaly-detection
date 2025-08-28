@@ -191,6 +191,7 @@ def index(request: Request, date: Optional[str] = None):
           h2 {
             margin-bottom: 20px;
           }
+                            
           #upload-status {
             display: block;
             margin-top: 15px;
