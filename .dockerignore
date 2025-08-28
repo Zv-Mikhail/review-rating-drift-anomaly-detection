@@ -1,0 +1,21 @@
+# виртуалки и кэш
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.egg-info/
+.build/
+dist/
+.git/
+.gitignore
+
+# временные/локальные данные
+*.log
+notebooks/
+data/*
+!data/.gitkeep
+
+# системный мусор
+.DS_Store
+Thumbs.db

@@ -2,15 +2,10 @@ from __future__ import annotations
 import time
 from typing import Optional, Dict, Any
 from pathlib import Path
-from datetime import datetime
-import subprocess
-import shutil
-import sys 
 import pandas as pd
-from fastapi import FastAPI, Response, Query, Request, HTTPException
+from fastapi import FastAPI, Response, Query, Request, HTTPException, UploadFile, File
 from fastapi.responses import HTMLResponse
 from pydantic import BaseModel
-
 
 from analysis import (
     compute_summary,
@@ -21,29 +16,18 @@ from analysis import (
     make_pnegative_plot_png,
 )
 
-
 app = FastAPI(title="Mini Review Dashboard")
 
 PROJECT_ROOT = Path(__file__).resolve().parent
-RESULTS_DIR = PROJECT_ROOT / "parser" / "results"
 DATA_DIR = PROJECT_ROOT / "data"
-FINAL_CSV = DATA_DIR / "reviews_scored.csv"        #единый итоговый файл
-   
+FINAL_CSV = DATA_DIR / "reviews_scored.csv"        # единый итоговый файл
 
 # --- параметры регулярности/фильтра ---
 MIN_REVIEWS_PER_DAY = 3
 REGULARITY_WINDOW_DAYS = 90        
 REGULARITY_MIN_RATIO = 0.25        
 
-
-class ParseRequest(BaseModel):
-    article_id: str
-
 def _cleanup_old_files(folder: Path, keep: int = 0, pattern: str = "*") -> None:
-    """
-    Оставляет в папке только последние `keep` файлов (по mtime) под шаблон `pattern`.
-    Остальные тихо удаляет.
-    """
     folder.mkdir(parents=True, exist_ok=True)
     files = sorted(folder.glob(pattern), key=lambda p: p.stat().st_mtime, reverse=True)
     for f in files[keep:]:
@@ -53,60 +37,22 @@ def _cleanup_old_files(folder: Path, keep: int = 0, pattern: str = "*") -> None:
         except Exception:
             pass
 
-def _latest_xlsx_from_results() -> Path:
-    if not RESULTS_DIR.exists():
-        raise FileNotFoundError(f"Не найдена папка результатов: {RESULTS_DIR}")
-    xlsx_files = sorted(RESULTS_DIR.glob("*.xlsx"), key=lambda p: p.stat().st_mtime, reverse=True)
-    if not xlsx_files:
-        raise FileNotFoundError(f"Парсер отработал, но .xlsx не найден в {RESULTS_DIR}")
-    return xlsx_files[0]
-
 def _load_scored_df() -> Optional[pd.DataFrame]:
-    """
-    Локальный лоадер: сначала пытаемся читать новый FINAL_CSV,
-    если его нет — пробуем legacy-файл для совместимости.
-    Возвращает None, если файлов нет или CSV не читается.
-    """
     try:
         if FINAL_CSV.exists():
             return pd.read_csv(FINAL_CSV, parse_dates=["date"])
-        
     except Exception as e:
-        # битый CSV — не валим приложение
         print(f"[load_scored_df] read error: {e}")
         return None
     return None
 
-
-def _run_parser(article: str) -> None:
-    RESULTS_DIR.mkdir(parents=True, exist_ok=True)
-    completed = subprocess.run(
-        [sys.executable, "parser/main.py"],  # было: ["python", "parser/main.py"]
-        input=f"{article}\n".encode("utf-8"),
-        cwd=str(PROJECT_ROOT),
-        capture_output=True,
-        timeout=900,
-    )
-    if completed.returncode != 0:
-        out = completed.stdout.decode("utf-8", errors="ignore")
-        err = completed.stderr.decode("utf-8", errors="ignore")
-        raise RuntimeError(
-            f"parser/main.py failed (code {completed.returncode}).\nSTDOUT:\n{out}\nSTDERR:\n{err}"
-        )
-
-
 def _preprocess_xlsx_to_clean_tmp(xlsx_path: str) -> str:
-    """
-    Преобразует XLSX -> временный clean CSV в data/_tmp_clean.csv.
-    После следующего шага файл будет удалён.
-    """
     import preprocess.preprocess_dataset as pp
     DATA_DIR.mkdir(parents=True, exist_ok=True)
     tmp_clean = DATA_DIR / "_tmp_clean.csv"
     if hasattr(pp, "preprocess_data"):
         pp.preprocess_data(str(xlsx_path), str(tmp_clean))
     else:
-        # fallback (старый интерфейс модуля)
         xlsx_abs = Path(xlsx_path).resolve()
         pp.IN_PRIMARY = xlsx_abs
         pp.IN_FALLBACK = xlsx_abs
@@ -116,76 +62,38 @@ def _preprocess_xlsx_to_clean_tmp(xlsx_path: str) -> str:
     return str(tmp_clean.resolve())
 
 def _score_sentiment_and_write_final(clean_csv_path: str) -> str:
-    """
-    Считает сентимент и сохраняет только ОДИН финальный файл: data/reviews_scored.csv.
-    Для полной совместимости при наличии старого кода — удалим legacy-файл, если он есть.
-    """
     import preprocess.sentiment_analysis as sa
     DATA_DIR.mkdir(parents=True, exist_ok=True)
-
-    # подчистим возможные мусорные временные файлы
     _cleanup_old_files(DATA_DIR, keep=0, pattern="clean_*.csv")
     _cleanup_old_files(DATA_DIR, keep=0, pattern="scored_*.csv")
-
-    
 
     if hasattr(sa, "analyze_sentiment"):
         sa.analyze_sentiment(str(clean_csv_path), str(FINAL_CSV))
     else:
-        # fallback (старый интерфейс)
         sa.IN_PATH = Path(clean_csv_path).resolve()
         sa.OUT_PATH = FINAL_CSV
         sa.main()
-
     return str(FINAL_CSV.resolve())
 
-def _run_full_pipeline(article: str) -> Dict[str, Any]:
-    """
-    Полный цикл:
-      1) Парсер -> пишет .xlsx в parser/results/
-      2) Берём самый свежий .xlsx (без копирования в datasets/)
-      3) Препроцесс -> data/_tmp_clean.csv
-      4) Сентимент -> data/reviews_scored.csv
-      5) Чистим: удаляем _tmp_clean.csv и ВСЕ .xlsx в parser/results/
-    Возвращаем только путь к финальному CSV.
-    """
-   
-    _run_parser(article)
-
-    xlsx_path = _latest_xlsx_from_results()
-
+def _run_full_pipeline_from_xlsx(xlsx_path: Path) -> Dict[str, Any]:
     tmp_clean = _preprocess_xlsx_to_clean_tmp(str(xlsx_path))
-
     try:
         scored_csv = _score_sentiment_and_write_final(tmp_clean)
     finally:
-       
         try:
             Path(tmp_clean).unlink(missing_ok=True)
         except Exception:
             pass
-        _cleanup_old_files(RESULTS_DIR, keep=0, pattern="*.xlsx")
-
     return {"scored_csv": scored_csv}
 
-
 def _regularity_and_filter(df: pd.DataFrame) -> tuple[bool, pd.DataFrame, float]:
-    """
-    Возвращает (is_regular, df_filtered, dense_ratio).
-    is_regular — достаточно ли регулярные отзывы за REGULARITY_WINDOW_DAYS.
-    df_filtered — только дни, где кол-во отзывов >= MIN_REVIEWS_PER_DAY.
-    dense_ratio — доля «плотных» дней в окне (для сообщения).
-    """
     if df.empty or "date" not in df.columns:
         return False, df, 0.0
-
     d = df.copy()
     d["date"] = pd.to_datetime(d["date"]).dt.normalize()
-
     per_day = d.groupby("date").size()
     full_idx = pd.date_range(per_day.index.min(), per_day.index.max(), freq="D")
     per_day_full = per_day.reindex(full_idx, fill_value=0)
-
     if len(per_day_full) == 0:
         return False, d, 0.0
     last_date = per_day_full.index.max()
@@ -193,50 +101,41 @@ def _regularity_and_filter(df: pd.DataFrame) -> tuple[bool, pd.DataFrame, float]
     win = per_day_full[per_day_full.index >= cutoff]
     if len(win) == 0:
         return False, d, 0.0
-
     dense_ratio = float((win >= MIN_REVIEWS_PER_DAY).sum() / len(win))
     is_regular = dense_ratio >= REGULARITY_MIN_RATIO
-
     good_days = set(per_day_full[per_day_full >= MIN_REVIEWS_PER_DAY].index.date)
     d_filtered = d[d["date"].dt.date.isin(good_days)].copy()
-
     return is_regular, d_filtered, dense_ratio
 
-
-@app.post("/api/parse/start")
-def start_parse(payload: ParseRequest):
-    article = (payload.article_id or "").strip()
-    if not article:
-        raise HTTPException(status_code=400, detail="Артикул пустой.")
-    if not article.isdigit():
-        raise HTTPException(status_code=400, detail="Артикул должен содержать только цифры.")
-
+@app.post("/api/upload")
+async def upload_file(file: UploadFile = File(...)):
+    if not file.filename.endswith(".xlsx"):
+        raise HTTPException(status_code=400, detail="Нужен .xlsx файл")
+    tmp_path = DATA_DIR / f"uploaded_{int(time.time())}.xlsx"
+    DATA_DIR.mkdir(parents=True, exist_ok=True)
+    with tmp_path.open("wb") as f:
+        content = await file.read()
+        f.write(content)
     try:
-        paths = _run_full_pipeline(article)
-
+        paths = _run_full_pipeline_from_xlsx(tmp_path)
         df_new = _load_scored_df()
-        try:
+        last_date = None
+        if df_new is not None and not df_new.empty:
             last_date = pd.to_datetime(df_new["date"]).max().date().isoformat()
-        except Exception:
-            last_date = None
-
         return {
             "status": "ok",
-            "article_id": article,
             "scored_csv": paths["scored_csv"],
-            "last_date": last_date,  # чтобы сразу открыть проверку на последний день
-            "message": "ОК: данные получены и оценены. Итог: data/reviews_scored.csv.",
+            "last_date": last_date,
+            "message": "ОК: данные из файла обработаны и сохранены."
         }
-    except subprocess.TimeoutExpired:
-        raise HTTPException(status_code=504, detail="Таймаут парсера.")
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"{type(e).__name__}: {e}")
-
+    finally:
+        tmp_path.unlink(missing_ok=True)
 
 @app.get("/plot.png")
 def plot_png():
     df = _load_scored_df()
-    # нет данных — возвращаем прозрачную заглушку
     if df is None or df.empty:
         from io import BytesIO
         import matplotlib
@@ -249,10 +148,8 @@ def plot_png():
         plt.close(fig)
         buf.seek(0)
         return Response(content=buf.read(), media_type="image/png")
-
     is_regular, df_filtered, _ = _regularity_and_filter(df)
     if not is_regular or df_filtered.empty:
-        # та же заглушка
         from io import BytesIO
         import matplotlib
         matplotlib.use("Agg")
@@ -264,83 +161,92 @@ def plot_png():
         plt.close(fig)
         buf.seek(0)
         return Response(content=buf.read(), media_type="image/png")
-
     png = make_pnegative_plot_png(df_filtered)
     return Response(content=png, media_type="image/png")
-
-
-
-@app.get("/api/check")
-def api_check(date: str = Query(..., description="YYYY-MM-DD")):
-    df = _load_scored_df()
-    if df is None or df.empty:
-        raise HTTPException(status_code=404, detail="Данных ещё нет. Сначала загрузите отзывы.")
-    neg = check_negative_day_universal_pneg(date, df)
-    drift = detect_negative_drift(df, window=7, end_date=date, alpha=0.05)
-    return {"negative_day": neg, "drift": drift}
-
-
 
 @app.get("/", response_class=HTMLResponse)
 def index(request: Request, date: Optional[str] = None):
     df = _load_scored_df()
-
-    # 👉 если данных ещё нет — показываем одну плашку и выходим
     if df is None or df.empty:
         return HTMLResponse("""
         <html>
-          <head>
-            <meta charset="utf-8" />
-            <title>Mini Review Dashboard</title>
-            <style>
-              :root { --border:#e5e7eb; }
-              body { font-family: -apple-system, Segoe UI, Roboto, Arial, sans-serif; margin:24px; }
-              .wrap { max-width:900px; margin:0 auto; }
-              .form { margin:12px 0 16px 0; display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
-              input[type=text] { padding:8px 10px; border:1px solid var(--border); border-radius:8px; }
-              button { padding:8px 14px; border-radius:8px; border:1px solid var(--border); background:#fff; cursor:pointer; }
-              button:hover { background:#f9fafb; }
-              .muted { color:#6b7280; font-size:13px; }
-            </style>
-          </head>
-          <body>
-            <div class="wrap">
-              <h2>Загрузить новые отзывы по артикулу</h2>
-              <form class="form" id="parse-form" onsubmit="return false;">
-                <label for="article_id">Артикул:</label>
-                <input type="text" id="article_id" name="article_id" placeholder="Напр. 218295138" />
-                <button id="btn-parse" type="button">Запустить</button>
-                <span id="parse-status" class="muted" style="margin-left:8px;"></span>
-              </form>
-              <script>
-                async function startParse() {
-                  const inputEl = document.getElementById('article_id');
-                  const statusEl = document.getElementById('parse-status');
-                  const article = (inputEl.value || '').trim();
-                  statusEl.textContent = '';
-                  if (!article) { statusEl.textContent = 'Введите артикул.'; return; }
-                  try {
-                    statusEl.textContent = 'Отправка...';
-                    const res = await fetch('/api/parse/start', {
-                      method: 'POST',
-                      headers: {'Content-Type': 'application/json'},
-                      body: JSON.stringify({ article_id: article })
-                    });
-                    const data = await res.json();
-                    if (!res.ok) { statusEl.textContent = "Ошибка: " + (data.detail || res.status); return; }
-                    statusEl.textContent = "OK: " + data.message;
-                    setTimeout(() => { window.location.href = '/'; }, 600);
-                  } catch (e) { statusEl.textContent = 'Сетевая ошибка.'; }
-                }
-                document.addEventListener('DOMContentLoaded', function () {
-                  const btn = document.getElementById('btn-parse');
-                  if (btn) btn.addEventListener('click', startParse);
-                });
-              </script>
-            </div>
-          </body>
-        </html>
-        """, status_code=200)
+      <head>
+        <style>
+          body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #fafafa;
+          }
+          .container {
+            text-align: center;
+            background: white;
+            padding: 30px 40px;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+          }
+          h2 {
+            margin-bottom: 20px;
+          }
+          #upload-status {
+            display: block;
+            margin-top: 15px;
+            color: grey;
+            font-size: 14px;
+          }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <h2>Загрузить файл с отзывами (.xlsx)</h2>
+          <div>
+            <label for="file">Файл:</label>
+            <input type="file" id="file" />
+            <button id="btn-upload">Загрузить</button>
+            <span id="upload-status"></span>
+          </div>
+        </div>
+
+        <script>
+        async function uploadReviewsFile() {
+          const fileInput = document.getElementById('file');
+          const statusEl = document.getElementById('upload-status');
+          if (!fileInput.files.length) {
+            statusEl.textContent = 'Выберите .xlsx файл.';
+            return;
+          }
+          const formData = new FormData();
+          formData.append('file', fileInput.files[0]);
+          try {
+            statusEl.textContent = 'Загрузка...';
+            const res = await fetch('/api/upload', { method: 'POST', body: formData });
+            const data = await res.json();
+            if (!res.ok) {
+              statusEl.textContent = 'Ошибка: ' + (data.detail || res.status);
+              return;
+            }
+            statusEl.textContent = 'Файл успешно обработан!';
+            setTimeout(() => { window.location.href = '/'; }, 1500);
+          } catch (e) {
+            statusEl.textContent = 'Сетевая ошибка.';
+          }
+        }
+
+        document.addEventListener('DOMContentLoaded', function () {
+          const btn = document.getElementById('btn-upload');
+          if (btn) btn.addEventListener('click', uploadReviewsFile);
+        });
+        </script>
+      </body>
+    </html>
+        """)
+    # --- дальше всё как было (карточки, график, проверки) ---
+    # оставляем твой рендеринг summary / plots
+    # ...
+
 
 
     s = compute_summary(df)
@@ -458,14 +364,51 @@ def index(request: Request, date: Optional[str] = None):
         <div class="wrap">
           <h2>Обзор по отзывам</h2>
 
-          <!-- ВВОД АРТИКУЛА -->
-          <h3>Загрузить новые отзывы по артикулу</h3>
-          <form class="form" id="parse-form" onsubmit="return false;">
-            <label for="article_id">Артикул:</label>
-            <input type="text" id="article_id" name="article_id" placeholder="Напр. 218295138" />
-            <button id="btn-parse" type="button">Запустить</button>
-            <span id="parse-status" class="muted" style="margin-left:8px;"></span>
-          </form>
+          
+        <h3>Загрузить файл с отзывами (.xlsx)</h3>
+        <form class="form" id="upload-form" enctype="multipart/form-data" onsubmit="return false;">
+        <label for="file">Файл:</label>
+        <input type="file" id="file" name="file" accept=".xlsx" />
+        <button id="btn-upload" type="button">Загрузить</button>
+        <span id="upload-status" class="muted" style="margin-left:8px;"></span>
+        </form>
+
+        <script>
+        async function uploadReviewsFile() {{
+            const fileInput = document.getElementById('file');
+            const statusEl = document.getElementById('upload-status');
+
+            if (!fileInput.files.length) {{
+            statusEl.textContent = 'Выберите .xlsx файл.';
+            return;
+            }}
+
+            const formData = new FormData();
+            formData.append('file', fileInput.files[0]);
+
+            try {{
+            statusEl.textContent = 'Загрузка...';
+            const res = await fetch('/api/upload', {{ method: 'POST', body: formData }});
+            const data = await res.json();
+
+            if (!res.ok) {{
+                statusEl.textContent = 'Ошибка: ' + (data.detail || res.status);
+                return;
+            }}
+
+            statusEl.textContent = 'OK: ' + (data.message || 'Файл обработан');
+            setTimeout(() => {{ window.location.href = '/'; }}, 600);
+            }} catch (e) {{
+            statusEl.textContent = 'Сетевая ошибка.';
+            }}
+        }}
+
+        document.addEventListener('DOMContentLoaded', function () {{
+            const btn = document.getElementById('btn-upload');
+            if (btn) btn.addEventListener('click', uploadReviewsFile);
+        }});
+        </script>
+
 
           <script>
             async function startParse() {{

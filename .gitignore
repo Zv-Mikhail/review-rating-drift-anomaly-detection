@@ -1,21 +1,31 @@
+# виртуальное окружение и байткод
 .venv/
 __pycache__/
 *.pyc
 *.pyo
-notebooks/
 
-data/
+# логи
+*.log
 
-parser/results/
+# данные и временные файлы
+data/*
+!data/.gitkeep  # можно добавить пустой файл .gitkeep, чтобы папка отслеживалась
 
+parser/results/*
+!parser/results/.gitkeep
 
-datasets/*
+notebooks/*
+!notebooks/.gitkeep
 
+# IDE и системные файлы
+.vscode/
+.DS_Store
 
-!/analysis/
-!/preprocess/
-!/notebooks/
-!/app.py
-!/requirements.txt
-!/README.md
-!/image.png
+# исключения — то, что нужно в репозитории
+!app.py
+!requirements.txt
+!README.md
+!image.png
+!dockerfile
+!.dockerignore
+!.github/
