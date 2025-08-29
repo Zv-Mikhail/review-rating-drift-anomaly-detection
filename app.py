@@ -170,6 +170,7 @@ def index(request: Request, date: Optional[str] = None):
     if df is None or df.empty:
         return HTMLResponse("""
         <html>
+                            
       <head>
         <style>
           body {
