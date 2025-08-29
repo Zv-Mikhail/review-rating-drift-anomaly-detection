@@ -13,16 +13,11 @@ jobs:
     name: Build & Push (CPU)
     runs-on: ubuntu-latest
     timeout-minutes: 30
-    permissions:
-      contents: read
-      packages: write
+    permissions: { contents: read, packages: write }
 
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
 
       - name: Login to Docker Hub
         uses: docker/login-action@v3
@@ -36,10 +31,18 @@ jobs:
           context: .
           file: ./Dockerfile
           push: true
-          no-cache: true              # важно: не тащим старые CUDA-слои
+          no-cache: true
           tags: |
             ${{ secrets.DOCKER_HUB_USERNAME }}/mishanya-ml:latest
             ${{ secrets.DOCKER_HUB_USERNAME }}/mishanya-ml:${{ github.sha }}
+
+      # Sanity-check: убеждаемся, что в образе нет nvidia/*
+      - name: Sanity check image (no CUDA stuff)
+        run: |
+          docker pull ${{ secrets.DOCKER_HUB_USERNAME }}/mishanya-ml:${{ github.sha }}
+          docker run --rm ${{ secrets.DOCKER_HUB_USERNAME }}/mishanya-ml:${{ github.sha }} \
+            bash -lc 'test ! -d /usr/local/lib/python3.11/site-packages/nvidia'
+        shell: bash
 
   deploy:
     name: Deploy to VPS
@@ -48,9 +51,7 @@ jobs:
     timeout-minutes: 30
 
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
+      - uses: actions/checkout@v4
       - name: Add VPS host key to known_hosts
         run: |
           mkdir -p ~/.ssh
@@ -61,7 +62,6 @@ jobs:
         env:
           DOCKERHUB_USER: ${{ secrets.DOCKER_HUB_USERNAME }}
           DOCKERHUB_TOKEN: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
-          # тянем образ именно этого коммита
           IMAGE_NAME: ${{ secrets.DOCKER_HUB_USERNAME }}/mishanya-ml:${{ github.sha }}
           CONTAINER_NAME: mishanya-ml
           APP_PORT: "3000"
@@ -73,30 +73,24 @@ jobs:
           envs: DOCKERHUB_USER,DOCKERHUB_TOKEN,IMAGE_NAME,CONTAINER_NAME,APP_PORT
           script: |
             set -Eeo pipefail
-
             echo "${DOCKERHUB_TOKEN}" | docker login -u "${DOCKERHUB_USER}" --password-stdin
 
-            echo "Stop/remove old container"
             docker rm -f "${CONTAINER_NAME}" 2>/dev/null || true
 
-            echo "Aggressive prune"
+            # максимальная чистка перед pull
             docker container prune -f || true
             docker image prune -af || true
             docker builder prune -af || true
             docker volume prune -f || true
-
-            # удалим вообще все образы этого репозитория, чтобы точно не смешались слои
             docker images "${DOCKERHUB_USER}/mishanya-ml" -q | xargs -r docker rmi -f || true
 
-            export DOCKER_TMPDIR="$HOME/docker-tmp"
-            mkdir -p "$DOCKER_TMPDIR"
+            export DOCKER_TMPDIR="$HOME/docker-tmp"; mkdir -p "$DOCKER_TMPDIR"
 
             echo "Pull fresh image: ${IMAGE_NAME}"
             docker pull "${IMAGE_NAME}"
 
             mkdir -p ~/mishanya-ml-data
 
-            echo "Run container"
             docker run -d --name "${CONTAINER_NAME}" \
               -p ${APP_PORT}:3000 \
               -v ~/mishanya-ml-data:/app/data \
