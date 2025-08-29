@@ -2,11 +2,17 @@ name: CICD
 
 on:
   push:
-    branches: [ "cicd-test" ]
+    branches: ["cicd-test"]
+
+concurrency:
+  group: cicd-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   build:
+    name: Build & Push Image
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     permissions:
       contents: read
       packages: write
@@ -37,51 +43,78 @@ jobs:
           cache-to: type=gha,mode=max
 
   deploy:
+    name: Deploy to VPS
     needs: build
     runs-on: ubuntu-latest
+    timeout-minutes: 30
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Install SSH Key
-        uses: shimataro/ssh-key-action@v2
-        with:
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
-          known_hosts: ${{ secrets.SSH_HOST }}
-
-      - name: Add Known Hosts
+      - name: Add VPS host key to known_hosts
         run: |
+          mkdir -p ~/.ssh
           ssh-keyscan -p ${{ secrets.SSH_PORT }} -H ${{ secrets.SSH_HOST }} >> ~/.ssh/known_hosts
 
-      - name: Restart Docker container
+      - name: Deploy over SSH and restart container
         uses: appleboy/ssh-action@v0.1.10
+        env:
+          DOCKERHUB_USER: ${{ secrets.DOCKER_HUB_USERNAME }}
+          DOCKERHUB_TOKEN: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
+          IMAGE_NAME: ${{ secrets.DOCKER_HUB_USERNAME }}/mishanya-ml:latest
+          CONTAINER_NAME: mishanya-ml
+          APP_PORT: "3000"
         with:
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           port: ${{ secrets.SSH_PORT }}
           script: |
-            set -e
-            IMAGE="${{ secrets.DOCKER_HUB_USERNAME }}/mishanya-ml:latest"
-            CONTAINER="mishanya-ml"
-            PORT=3000
+            set -Eeuo pipefail
 
-            echo "Pulling image: $IMAGE"
-            docker pull "$IMAGE"
+            echo "== Disk space BEFORE =="
+            df -h || true
+            docker system df || true
 
-            echo "Stopping old container (if any)"
-            docker rm -f "$CONTAINER" || true
+            echo "Docker version on VPS:"
+            docker --version
 
+            echo "Login to Docker Hub"
+            echo "${DOCKERHUB_TOKEN}" | docker login -u "${DOCKERHUB_USER}" --password-stdin
+
+            echo "Freeing space (won't touch running containers)"
+            docker container prune -f || true
+            docker image prune -af || true
+            docker volume prune -f || true
+
+            # Распаковка слоёв в домашнюю директорию (если /var тесный)
+            export DOCKER_TMPDIR="$HOME/docker-tmp"
+            mkdir -p "$DOCKER_TMPDIR"
+
+            echo "== Disk space AFTER prune =="
+            df -h || true
+            docker system df || true
+
+            echo "Pulling image: ${IMAGE_NAME}"
+            docker pull "${IMAGE_NAME}"
+
+            echo "Stopping old container (if exists)"
+            docker rm -f "${CONTAINER_NAME}" 2>/dev/null || true
+
+            echo "Ensuring data dir exists"
             mkdir -p ~/mishanya-ml-data
 
-            echo "Starting new container"
-            docker run -d --name "$CONTAINER" \
-              -p ${PORT}:3000 \
+            echo "Starting new container ${CONTAINER_NAME} on port ${APP_PORT}"
+            docker run -d --name "${CONTAINER_NAME}" \
+              -p ${APP_PORT}:3000 \
               -v ~/mishanya-ml-data:/app/data \
               --restart unless-stopped \
-              "$IMAGE"
+              "${IMAGE_NAME}"
 
-            echo "Cleaning old images"
+            echo "Pruning dangling images"
             docker image prune -af || true
+
+            echo "Logout from Docker Hub"
+            docker logout || true
           debug: true
