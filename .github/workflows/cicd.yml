@@ -70,8 +70,10 @@ jobs:
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           port: ${{ secrets.SSH_PORT }}
+          # ВАЖНО: перечисляем имена переменных, которые нужно передать на VPS
+          envs: DOCKERHUB_USER,DOCKERHUB_TOKEN,IMAGE_NAME,CONTAINER_NAME,APP_PORT
           script: |
-            set -Eeuo pipefail
+            set -Eeo pipefail  # убрал -u, чтобы не падать, если вдруг какая-то переменная пустая
 
             echo "== Disk space BEFORE =="
             df -h || true
@@ -80,7 +82,7 @@ jobs:
             echo "Docker version on VPS:"
             docker --version
 
-            echo "Login to Docker Hub"
+            echo "Login to Docker Hub as ${DOCKERHUB_USER}"
             echo "${DOCKERHUB_TOKEN}" | docker login -u "${DOCKERHUB_USER}" --password-stdin
 
             echo "Freeing space (won't touch running containers)"
@@ -88,7 +90,6 @@ jobs:
             docker image prune -af || true
             docker volume prune -f || true
 
-            # Распаковка слоёв в домашнюю директорию (если /var тесный)
             export DOCKER_TMPDIR="$HOME/docker-tmp"
             mkdir -p "$DOCKER_TMPDIR"
 
