@@ -10,7 +10,7 @@ concurrency:
 
 jobs:
   build:
-    name: Build & Push Image
+    name: Build & Push (CPU)
     runs-on: ubuntu-latest
     timeout-minutes: 30
     permissions:
@@ -30,17 +30,16 @@ jobs:
           username: ${{ secrets.DOCKER_HUB_USERNAME }}
           password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
 
-      - name: Build and push
+      - name: Build and push (CPU, no cache)
         uses: docker/build-push-action@v5
         with:
           context: .
           file: ./Dockerfile
           push: true
+          no-cache: true              # важно: не тащим старые CUDA-слои
           tags: |
             ${{ secrets.DOCKER_HUB_USERNAME }}/mishanya-ml:latest
             ${{ secrets.DOCKER_HUB_USERNAME }}/mishanya-ml:${{ github.sha }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
 
   deploy:
     name: Deploy to VPS
@@ -62,7 +61,8 @@ jobs:
         env:
           DOCKERHUB_USER: ${{ secrets.DOCKER_HUB_USERNAME }}
           DOCKERHUB_TOKEN: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
-          IMAGE_NAME: ${{ secrets.DOCKER_HUB_USERNAME }}/mishanya-ml:latest
+          # тянем образ именно этого коммита
+          IMAGE_NAME: ${{ secrets.DOCKER_HUB_USERNAME }}/mishanya-ml:${{ github.sha }}
           CONTAINER_NAME: mishanya-ml
           APP_PORT: "3000"
         with:
@@ -70,52 +70,39 @@ jobs:
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           port: ${{ secrets.SSH_PORT }}
-          # ВАЖНО: перечисляем имена переменных, которые нужно передать на VPS
           envs: DOCKERHUB_USER,DOCKERHUB_TOKEN,IMAGE_NAME,CONTAINER_NAME,APP_PORT
           script: |
-            set -Eeo pipefail  # убрал -u, чтобы не падать, если вдруг какая-то переменная пустая
+            set -Eeo pipefail
 
-            echo "== Disk space BEFORE =="
-            df -h || true
-            docker system df || true
-
-            echo "Docker version on VPS:"
-            docker --version
-
-            echo "Login to Docker Hub as ${DOCKERHUB_USER}"
             echo "${DOCKERHUB_TOKEN}" | docker login -u "${DOCKERHUB_USER}" --password-stdin
 
-            echo "Freeing space (won't touch running containers)"
+            echo "Stop/remove old container"
+            docker rm -f "${CONTAINER_NAME}" 2>/dev/null || true
+
+            echo "Aggressive prune"
             docker container prune -f || true
             docker image prune -af || true
+            docker builder prune -af || true
             docker volume prune -f || true
+
+            # удалим вообще все образы этого репозитория, чтобы точно не смешались слои
+            docker images "${DOCKERHUB_USER}/mishanya-ml" -q | xargs -r docker rmi -f || true
 
             export DOCKER_TMPDIR="$HOME/docker-tmp"
             mkdir -p "$DOCKER_TMPDIR"
 
-            echo "== Disk space AFTER prune =="
-            df -h || true
-            docker system df || true
-
-            echo "Pulling image: ${IMAGE_NAME}"
+            echo "Pull fresh image: ${IMAGE_NAME}"
             docker pull "${IMAGE_NAME}"
 
-            echo "Stopping old container (if exists)"
-            docker rm -f "${CONTAINER_NAME}" 2>/dev/null || true
-
-            echo "Ensuring data dir exists"
             mkdir -p ~/mishanya-ml-data
 
-            echo "Starting new container ${CONTAINER_NAME} on port ${APP_PORT}"
+            echo "Run container"
             docker run -d --name "${CONTAINER_NAME}" \
               -p ${APP_PORT}:3000 \
               -v ~/mishanya-ml-data:/app/data \
               --restart unless-stopped \
               "${IMAGE_NAME}"
 
-            echo "Pruning dangling images"
             docker image prune -af || true
-
-            echo "Logout from Docker Hub"
             docker logout || true
           debug: true
