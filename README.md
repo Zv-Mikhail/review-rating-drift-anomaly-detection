@@ -116,6 +116,10 @@ http://127.0.0.1:8000
 Скриншот веб-интерфейса: пример визуализации метрик и графиков
 ![alt text](image.png)
 ---
+![telegram-cloud-photo-size-2-5301046055351223008-w](https://github.com/user-attachments/assets/2c13df7f-e33d-4889-b4b8-e6aef2b86ec0)
+
+![telegram-cloud-photo-size-2-5300939080600777072-w](https://github.com/user-attachments/assets/97b65db4-8bce-4275-8ef4-a136257fdbd3)
+
 
 
 
